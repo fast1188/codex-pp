@@ -1,0 +1,54 @@
+
+╔════════════════════════════════════════════════╗
+║                                                ║
+║       codex-pp v0.1.0 - 国产化 AI 编程 CLI    ║
+║                                                ║
+║  • 多模型支持                                  ║
+║  • 国内直连(api.skillai.top)                  ║
+║  • 兼容 ai-agent-skills 生态                   ║
+║  • 中文优先                                    ║
+║                                                ║
+╚════════════════════════════════════════════════╝
+
+
+============================================================
+ codex-pp 功能演示
+============================================================
+
+① 配置管理
+   默认 provider: skillai
+   已配置: github_models, groq, gemini
+
+② 多模型支持
+   已集成 6 个 provider:
+     ○ skillai         SkillAI (国内直连)
+     ○ openai          OpenAI 官方
+     ○ anthropic       Anthropic 官方
+     ✓ github_models   GitHub Models (免费)
+     ✓ groq            Groq (超快推理,免费)
+     ✓ gemini          Google Gemini (免费层)
+
+③ Skill 系统(ai-agent-skills 集成)
+   共有 11 个 skill,已装 1 个
+     ○ api-fallback                   撞限速时弹窗推荐 fallback 方案
+     ○ chinese-dev-helper             中文开发助手,40+ 术语对照
+     ○ codex-starter                  OpenAI Codex CLI 5 分钟上手套装
+     ○ cursor-rules-pack              Cursor .cursorrules 配置包
+     ○ openclaw-deploy                OpenClaw 一键远程部署
+     ... 还有 6 个
+
+④ 持久化记忆
+   消息数: 0
+   记忆项: 2
+   会话数: 0
+
+⑤ 用量统计
+   总请求: 4
+   总 token: 146
+   按模型:
+     gpt-4o-mini: 2 次 / 0
+     llama-3.3-70b-versatile: 2 次 / 146
+
+============================================================
+ 演示完成! 立即开始: py codex-pp ask '你的问题'
+============================================================

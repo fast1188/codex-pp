@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""
+codex-pp 主入口
+"""
+import sys
+import os
+
+# 把当前目录加到 sys.path,保证能找到 codex_pp 包
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from codex_pp.cli import main
+
+if __name__ == "__main__":
+    sys.exit(main())

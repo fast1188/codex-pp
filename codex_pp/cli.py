@@ -7,13 +7,13 @@ cli.py - 命令行界面
 import sys
 import argparse
 
-from . import config, llm, skill, memory, i18n
+from . import config, llm, skill, memory, extras, i18n
 from .ui import (
     cprint, print_banner, print_error, print_warning, print_success,
     print_info, print_table, format_tokens, format_latency
 )
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 
 def tr(key, **kwargs):
@@ -412,6 +412,103 @@ def cmd_memory(args):
     return 0
 
 
+def cmd_snippet(args):
+    """snippet 子命令 (v0.4.0)"""
+    if args.snippet_action == "list":
+        snippets = extras.list_snippets(
+            tag=getattr(args, "tag", None),
+            language=getattr(args, "language", None),
+            search=getattr(args, "search", None),
+        )
+        if not snippets:
+            print_info("还没有任何代码片段")
+            print_info("用 `codex-pp snippet add` 添加")
+            return 0
+        print_info(f"代码片段 ({len(snippets)}):")
+        for s in snippets:
+            tags_str = ",".join(s.get("tags", []))
+            print(f"  [{s['id']}] {s['name']} ({s.get('language', 'python')}, {tags_str})")
+    elif args.snippet_action == "show":
+        s = extras.get_snippet(args.id)
+        if not s:
+            print_warning(f"未找到: {args.id}")
+            return 1
+        print(f"\n  # {s['name']}  ({s.get('language', 'python')})")
+        print(f"  # tags: {','.join(s.get('tags', []))}")
+        print(f"  # created: {s.get('created', '')}  used: {s.get('used', 0)}x")
+        print(f"\n{s['content']}\n")
+    elif args.snippet_action == "add":
+        # 从文件读 content
+        if hasattr(args, "file") and args.file:
+            from pathlib import Path
+            try:
+                content = Path(args.file).read_text(encoding="utf-8")
+            except Exception as e:
+                print_error(f"读文件失败: {e}")
+                return 1
+        else:
+            print_error("用法: codex-pp snippet add <name> --file <path> [--tags t1,t2] [--lang python]")
+            return 1
+        s = extras.add_snippet(
+            name=args.name,
+            content=content,
+            tags=getattr(args, "tags", "") or "",
+            language=getattr(args, "lang", "python"),
+        )
+        print_success(f"✓ 已添加: [{s['id']}] {s['name']}")
+    elif args.snippet_action == "delete":
+        if extras.delete_snippet(args.id):
+            print_success(f"✓ 已删除: {args.id}")
+        else:
+            print_warning(f"未找到: {args.id}")
+    elif args.snippet_action == "search":
+        snippets = extras.list_snippets(search=args.query)
+        if not snippets:
+            print_info(f"未找到: {args.query}")
+            return 0
+        print_info(f"搜索结果 ({len(snippets)}):")
+        for s in snippets:
+            print(f"  [{s['id']}] {s['name']}")
+    else:
+        print_error("用法: codex-pp snippet <list|add|show|delete|search>")
+        return 1
+    return 0
+
+
+def cmd_history(args):
+    """history 子命令 (v0.4.0)"""
+    if getattr(args, "clear", False):
+        extras.clear_history()
+        print_success("✓ 历史已清空")
+        return 0
+    items = extras.get_history(
+        limit=getattr(args, "limit", 20) or 20,
+        provider=getattr(args, "provider", None),
+        search=getattr(args, "search", None),
+    )
+    if not items:
+        print_info("还没有历史")
+        return 0
+    print_info(f"最近 {len(items)} 条历史:")
+    for h in items:
+        cmd = h["command"]
+        if len(cmd) > 60:
+            cmd = cmd[:60] + "..."
+        prov = f"[{h.get('provider', '')}/{h.get('model', '')}]" if h.get('provider') else ""
+        print(f"  {h['ts_str']}  {prov}  {cmd}")
+    return 0
+
+
+def cmd_completion(args):
+    """completion 子命令 (v0.4.0)"""
+    shell = getattr(args, "shell", "bash")
+    script = extras.get_completion_script(shell)
+    print(script)
+    print()
+    print(f"# 添加到 ~/.{shell}rc:  eval \"$(codex-pp completion {shell})\"", file=__import__('sys').stderr)
+    return 0
+
+
 def main():
     """主入口"""
     parser = argparse.ArgumentParser(
@@ -467,6 +564,39 @@ def main():
     # stats
     p_stats = subparsers.add_parser("stats", help="用量统计")
     p_stats.set_defaults(func=cmd_stats)
+
+    # snippet (v0.4.0)
+    p_snippet = subparsers.add_parser("snippet", help="管理代码片段(v0.4.0)")
+    snippet_sub = p_snippet.add_subparsers(dest="snippet_action")
+    s_list = snippet_sub.add_parser("list", help="列出所有片段")
+    s_list.add_argument("--tag", help="按标签过滤")
+    s_list.add_argument("--language", help="按语言过滤")
+    s_list.add_argument("--search", help="按关键词搜索")
+    s_add = snippet_sub.add_parser("add", help="添加片段")
+    s_add.add_argument("name", help="片段名称")
+    s_add.add_argument("--file", required=True, help="片段内容文件路径")
+    s_add.add_argument("--tags", help="标签(逗号分隔)")
+    s_add.add_argument("--lang", default="python", help="语言")
+    s_show = snippet_sub.add_parser("show", help="显示片段")
+    s_show.add_argument("id", type=int, help="片段 ID")
+    s_del = snippet_sub.add_parser("delete", help="删除片段")
+    s_del.add_argument("id", type=int, help="片段 ID")
+    s_search = snippet_sub.add_parser("search", help="搜索片段")
+    s_search.add_argument("query", help="搜索关键词")
+    p_snippet.set_defaults(func=cmd_snippet)
+
+    # history (v0.4.0)
+    p_history = subparsers.add_parser("history", help="查看命令历史(v0.4.0)")
+    p_history.add_argument("--limit", type=int, default=20, help="最多显示 N 条")
+    p_history.add_argument("--provider", help="按 provider 过滤")
+    p_history.add_argument("--search", help="按命令内容搜索")
+    p_history.add_argument("--clear", action="store_true", help="清空历史")
+    p_history.set_defaults(func=cmd_history)
+
+    # completion (v0.4.0)
+    p_completion = subparsers.add_parser("completion", help="生成 shell 补全脚本(v0.4.0)")
+    p_completion.add_argument("shell", nargs="?", default="bash", choices=["bash", "zsh"], help="shell 类型")
+    p_completion.set_defaults(func=cmd_completion)
 
     # version
     p_version = subparsers.add_parser("version", help="显示版本")

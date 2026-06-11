@@ -44,6 +44,7 @@ codex-pp chat
 
 | 命令 | 功能 |
 |------|------|
+| `codex-pp demo` | **演示所有功能(新)** |
 | `codex-pp ask "问题"` | 单次提问 |
 | `codex-pp chat` | 进入对话模式 |
 | `codex-pp models` | 列出所有可用模型 |
@@ -55,6 +56,48 @@ codex-pp chat
 | `codex-pp skill install <name>` | 安装 skill |
 | `codex-pp memory list` | 持久化记忆 |
 | `codex-pp memory set <key> <val>` | 存记忆项 |
+
+## 演示输出(`codex-pp demo`)
+
+```text
+╔════════════════════════════════════════════════╗
+║       codex-pp v0.1.0 - 国产化 AI 编程 CLI    ║
+║  • 多模型支持                                  ║
+║  • 国内直连(api.skillai.top)                  ║
+║  • 兼容 ai-agent-skills 生态                   ║
+║  • 中文优先                                    ║
+╚════════════════════════════════════════════════╝
+
+============================================================
+ codex-pp 功能演示
+============================================================
+
+① 配置管理
+   默认 provider: skillai
+   已配置: github_models, groq, gemini
+
+② 多模型支持
+   已集成 6 个 provider:
+     ○ skillai         SkillAI (国内直连)
+     ✓ github_models   GitHub Models (免费)
+     ✓ groq            Groq (超快推理,免费)
+     ✓ gemini          Google Gemini (免费层)
+
+③ Skill 系统(ai-agent-skills 集成)
+   共有 11 个 skill,已装 1 个
+     ○ api-fallback                   撞限速时弹窗推荐 fallback 方案
+     ○ chinese-dev-helper             中文开发助手,40+ 术语对照
+     ... 还有 9 个
+
+④ 持久化记忆
+   消息数: 0
+   记忆项: 2
+   会话数: 0
+
+⑤ 用量统计
+   总请求: 4
+   总 token: 146
+```
 
 ## 支持的 Provider
 

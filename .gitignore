@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets - NEVER commit these!
+*.key.txt
+*_key.txt
+.env
+.env.local
+.env.production
+api_keys.txt
+secrets.json
+
+# Runtime data
+*.log
+logs/
+*.pid
+
+# codex-pp specific
+~/.codex-pp/config.json  # user config (gitignored, generated at runtime)
+!router_config.example.json  # but keep the example
+
+# Build artifacts
+*.spec
+build/
+dist/
+*.pyc
+__pycache__/

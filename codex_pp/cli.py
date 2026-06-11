@@ -279,6 +279,68 @@ def cmd_skill(args):
     return 0
 
 
+def cmd_demo(args):
+    """演示模式: 展示所有功能"""
+    print_banner()
+    print()
+    print(cprint("=" * 60, "cyan"))
+    print(cprint(" codex-pp 功能演示", "cyan", bold=True))
+    print(cprint("=" * 60, "cyan"))
+    print()
+
+    # 1. 配置
+    print(cprint("① 配置管理", "magenta", bold=True))
+    cfg = config.load_config()
+    print(f"   默认 provider: {cfg['default_provider']}")
+    enabled = [p for p, c in cfg['providers'].items() if c.get('enabled') and c.get('api_key')]
+    print(f"   已配置: {', '.join(enabled) if enabled else '(无)'}")
+    print()
+
+    # 2. 模型
+    print(cprint("② 多模型支持", "magenta", bold=True))
+    print(f"   已集成 {len(cfg['providers'])} 个 provider:")
+    for p, c in cfg['providers'].items():
+        status = "✓" if c.get('enabled') and c.get('api_key') else "○"
+        print(f"     {status} {p:15} {c.get('name', p)}")
+    print()
+
+    # 3. Skills
+    print(cprint("③ Skill 系统(ai-agent-skills 集成)", "magenta", bold=True))
+    skills = skill.list_skills()
+    installed = [s['name'] for s in skills if s['installed']]
+    print(f"   共有 {len(skills)} 个 skill,已装 {len(installed)} 个")
+    for s in skills[:5]:
+        marker = "✓" if s['installed'] else "○"
+        print(f"     {marker} {s['name']:30} {s['desc']}")
+    if len(skills) > 5:
+        print(f"     ... 还有 {len(skills) - 5} 个")
+    print()
+
+    # 4. 持久化记忆
+    print(cprint("④ 持久化记忆", "magenta", bold=True))
+    stats = memory.get_stats()
+    print(f"   消息数: {stats['messages']}")
+    print(f"   记忆项: {stats['memories']}")
+    print(f"   会话数: {stats['sessions']}")
+    print()
+
+    # 5. 用量统计
+    print(cprint("⑤ 用量统计", "magenta", bold=True))
+    usage = config.get_usage_stats()
+    print(f"   总请求: {usage['total_requests']}")
+    print(f"   总 token: {format_tokens(usage['total_input_tokens'] + usage['total_output_tokens'])}")
+    if usage.get('by_model'):
+        print("   按模型:")
+        for model, m in list(usage['by_model'].items())[:3]:
+            sub = m['input'] + m['output']
+            print(f"     {model}: {m['requests']} 次 / {format_tokens(sub)}")
+    print()
+
+    print(cprint("=" * 60, "cyan"))
+    print(cprint(" 演示完成! 立即开始: py codex-pp ask '你的问题'", "green", bold=True))
+    print(cprint("=" * 60, "cyan"))
+
+
 def cmd_memory(args):
     """memory 子命令"""
     if args.memory_action == "list":
@@ -365,6 +427,10 @@ def main():
     # version
     p_version = subparsers.add_parser("version", help="显示版本")
     p_version.set_defaults(func=cmd_version)
+
+    # demo
+    p_demo = subparsers.add_parser("demo", help="演示所有功能")
+    p_demo.set_defaults(func=cmd_demo)
 
     # skill
     p_skill = subparsers.add_parser("skill", help="管理 skills")

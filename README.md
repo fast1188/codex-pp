@@ -22,6 +22,28 @@
 | Skill 系统 | ❌ | ✓ 兼容 ai-agent-skills |
 | 持久化记忆 | ❌ | ✓ SQLite 跨会话 |
 | 中文 UI | 部分 | ✓ 优先 |
+
+## v0.4.0 新增功能 ✨
+
+- **`snippet`** - 代码片段管理(列表 / 添加 / 搜索 / 显示 / 删除)
+- **`history`** - 命令历史(带 provider / search 过滤 + `--clear` 清空)
+- **`completion`** - 生成 bash / zsh shell 补全脚本
+- **i18n** - 中英双语支持
+- **config import / export** - 配置备份与同步
+
+```bash
+# 代码片段(节省重复代码时间)
+echo "def hello(): print('hi')" > /tmp/sn.py
+py codex-pp snippet add hello --file /tmp/sn.py --tags "demo"
+
+# 历史命令
+py codex-pp history --limit 10
+py codex-pp history --provider github_models
+py codex-pp history --clear
+
+# Shell 补全
+echo 'eval "$(py codex-pp completion bash)"' >> ~/.bashrc
+```
 | 用量统计 | ❌ | ✓ |
 
 ## 5 分钟上手

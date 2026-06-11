@@ -7,13 +7,18 @@ cli.py - 命令行界面
 import sys
 import argparse
 
-from . import config, llm, skill, memory
+from . import config, llm, skill, memory, i18n
 from .ui import (
     cprint, print_banner, print_error, print_warning, print_success,
     print_info, print_table, format_tokens, format_latency
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
+
+
+def tr(key, **kwargs):
+    """翻译快捷方式"""
+    return i18n.t(key, **kwargs)
 
 
 def cmd_chat(args):
@@ -203,8 +208,41 @@ def cmd_config(args):
     elif args.config_action == "path":
         print(f"配置目录: {config.CONFIG_DIR}")
         print(f"配置文件: {config.CONFIG_FILE}")
+    elif args.config_action == "lang":
+        if not args.lang:
+            print_error("用法: codex-pp config lang <zh|en>")
+            return 1
+        i18n.set_lang(args.lang)
+        print_success(f"语言已切换: {args.lang}")
+    elif args.config_action == "export":
+        if not args.export_file:
+            print_error("用法: codex-pp config export <file>")
+            return 1
+        try:
+            import shutil
+            shutil.copy(config.CONFIG_FILE, args.export_file)
+            print_success(f"配置已导出到 {args.export_file}")
+        except Exception as e:
+            print_error(f"导出失败: {e}")
+            return 1
+    elif args.config_action == "import":
+        if not args.import_file:
+            print_error("用法: codex-pp config import <file>")
+            return 1
+        try:
+            import shutil
+            from pathlib import Path
+            src = Path(args.import_file)
+            if not src.exists():
+                print_error(f"文件不存在: {src}")
+                return 1
+            shutil.copy(src, config.CONFIG_FILE)
+            print_success(f"配置已从 {src} 导入")
+        except Exception as e:
+            print_error(f"导入失败: {e}")
+            return 1
     else:
-        print_error("用法: codex-pp config <set-key|set-default|enable|disable|list|path>")
+        print_error("用法: codex-pp config <set-key|set-default|enable|disable|list|path|lang|export|import>")
         return 1
 
 
@@ -418,6 +456,12 @@ def main():
     c_disable.add_argument("provider", help="provider 名称")
     c_list = config_sub.add_parser("list", help="列出所有配置")
     c_path = config_sub.add_parser("path", help="显示配置路径")
+    c_lang = config_sub.add_parser("lang", help="设置语言 (zh/en)")
+    c_lang.add_argument("lang", nargs="?", help="zh 或 en")
+    c_export = config_sub.add_parser("export", help="导出配置到文件")
+    c_export.add_argument("export_file", nargs="?", help="目标文件路径")
+    c_import = config_sub.add_parser("import", help="从文件导入配置")
+    c_import.add_argument("import_file", nargs="?", help="源文件路径")
     p_config.set_defaults(func=cmd_config)
 
     # stats

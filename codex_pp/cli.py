@@ -7,11 +7,23 @@ cli.py - 命令行界面
 import sys
 import argparse
 
-from . import config, llm, skill, memory, extras, i18n
-from .ui import (
-    cprint, print_banner, print_error, print_warning, print_success,
-    print_info, print_table, format_tokens, format_latency
-)
+# 兼容两种运行方式:
+# - 作为包运行: `py -m codex_pp.cli` (相对 import)
+# - 作为脚本运行: `codex++.exe` (PyInstaller onefile, 需要绝对 import)
+try:
+    from . import config, llm, skill, memory, extras, i18n
+    from .ui import (
+        cprint, print_banner, print_error, print_warning, print_success,
+        print_info, print_table, format_tokens, format_latency,
+        Spinner, print_assistant_header,
+    )
+except ImportError:
+    from codex_pp import config, llm, skill, memory, extras, i18n
+    from codex_pp.ui import (
+        cprint, print_banner, print_error, print_warning, print_success,
+        print_info, print_table, format_tokens, format_latency,
+        Spinner, print_assistant_header,
+    )
 
 __version__ = "0.4.0"
 
@@ -76,7 +88,7 @@ def cmd_chat(args):
         if cmd in ("switch", "切换"):
             print_info("当前可用 providers:")
             for pname, pcfg in cfg["providers"].items():
-                status = "✓" if pcfg.get("enabled") and pcfg.get("api_key") else "✗"
+                status = "[OK]" if pcfg.get("enabled") and pcfg.get("api_key") else "[X]"
                 print(f"  {status} {pname}: {pcfg.get('name', pname)}")
             print_info("用法: codex-pp chat --provider <name>")
             continue
@@ -92,26 +104,35 @@ def cmd_chat(args):
         memory.save_message(session_id, "user", user_input)
         messages.append({"role": "user", "content": user_input})
 
+        # 显示 spinner + 助手头
+        print_assistant_header()
         try:
-            result = llm.chat(
-                provider_name=provider,
-                messages=messages,
-                model=model,
-                stream=True,
-            )
+            with Spinner("思考中", color="cyan"):
+                result = llm.chat(
+                    provider_name=provider,
+                    messages=messages,
+                    model=model,
+                    stream=True,
+                )
+            # spinner 退出后, 输出回车 + 空行分隔
+            print()
             messages.append({"role": "assistant", "content": result["content"]})
             memory.save_message(session_id, "assistant", result["content"])
 
             # 输出用量
             usage_line = (
-                f"[{result['model']} | "
+                f"  [{result['model']} | "
                 f"输入 {format_tokens(result['input_tokens'])} | "
                 f"输出 {format_tokens(result['output_tokens'])} | "
                 f"耗时 {format_latency(result['latency'])}]"
             )
             print(cprint(usage_line, "dim"))
+        except llm.ModelNotSupportedError as e:
+            print_error(f"模型不支持: {e}")
+            print_info(f"用 `codex-pp models -v` 查看该 provider 支持的模型列表")
         except Exception as e:
             print_error(f"调用失败: {e}")
+            print_warning("如持续失败,检查 API key / 网络 / provider 配置")
 
 
 def cmd_ask(args):
@@ -126,13 +147,15 @@ def cmd_ask(args):
 
     question = " ".join(args.question)
     messages = [{"role": "user", "content": question}]
+    print_assistant_header()
     try:
-        result = llm.chat(
-            provider_name=provider,
-            messages=messages,
-            model=args.model,
-            stream=True,
-        )
+        with Spinner("思考中", color="cyan"):
+            result = llm.chat(
+                provider_name=provider,
+                messages=messages,
+                model=args.model,
+                stream=True,
+            )
         print()
         print()
         usage = result.get("usage", {})
@@ -143,6 +166,10 @@ def cmd_ask(args):
                 f"耗时 {format_latency(result.get('latency', 0))}]",
                 "dim"
             ))
+    except llm.ModelNotSupportedError as e:
+        print_error(f"模型不支持: {e}")
+        print_info(f"用 `codex-pp models -v` 查看该 provider 支持的模型列表")
+        return 1
     except Exception as e:
         print_error(f"调用失败: {e}")
         return 1
@@ -153,7 +180,7 @@ def cmd_models(args):
     cfg = config.load_config()
     print_info("可用 provider 和模型:")
     for pname, pcfg in cfg["providers"].items():
-        status = "✓ 已配置" if pcfg.get("enabled") and pcfg.get("api_key") else "✗ 未配置"
+        status = "[OK] 已配置" if pcfg.get("enabled") and pcfg.get("api_key") else "[X] 未配置"
         print(f"\n  [{pname}] {pcfg.get('name', pname)} - {status}")
         if args.verbose or pcfg.get("enabled"):
             print(f"    URL: {pcfg.get('base_url')}")
@@ -161,7 +188,7 @@ def cmd_models(args):
             print(f"    默认模型: {pcfg.get('default_model')}")
             print(f"    可用模型 ({len(models)}):")
             for m in models:
-                default = " ⭐ 默认" if m == pcfg.get("default_model") else ""
+                default = " * 默认" if m == pcfg.get("default_model") else ""
                 print(f"      - {m}{default}")
 
 
@@ -202,7 +229,7 @@ def cmd_config(args):
         print()
         print("  Providers:")
         for pname, pcfg in cfg["providers"].items():
-            enabled = "✓" if pcfg.get("enabled") else "✗"
+            enabled = "[OK]" if pcfg.get("enabled") else "[X]"
             key_status = "已配置" if pcfg.get("api_key") else "未配置"
             print(f"    [{enabled}] {pname}: {key_status}")
     elif args.config_action == "path":
@@ -282,7 +309,7 @@ def cmd_skill(args):
         for cat, items in by_cat.items():
             print(f"\n  [{cat}]")
             for s in items:
-                status = "✓ 已装" if s["installed"] else "  未装"
+                status = "[OK] 已装" if s["installed"] else "  未装"
                 print(f"    {status} {s['name']:30} {s['desc']}")
     elif args.skill_action == "install":
         if not args.name:
@@ -327,7 +354,7 @@ def cmd_demo(args):
     print()
 
     # 1. 配置
-    print(cprint("① 配置管理", "magenta", bold=True))
+    print(cprint("(1) 配置管理", "magenta", bold=True))
     cfg = config.load_config()
     print(f"   默认 provider: {cfg['default_provider']}")
     enabled = [p for p, c in cfg['providers'].items() if c.get('enabled') and c.get('api_key')]
@@ -335,27 +362,27 @@ def cmd_demo(args):
     print()
 
     # 2. 模型
-    print(cprint("② 多模型支持", "magenta", bold=True))
+    print(cprint("(2) 多模型支持", "magenta", bold=True))
     print(f"   已集成 {len(cfg['providers'])} 个 provider:")
     for p, c in cfg['providers'].items():
-        status = "✓" if c.get('enabled') and c.get('api_key') else "○"
+        status = "[OK]" if c.get('enabled') and c.get('api_key') else "[o]"
         print(f"     {status} {p:15} {c.get('name', p)}")
     print()
 
     # 3. Skills
-    print(cprint("③ Skill 系统(ai-agent-skills 集成)", "magenta", bold=True))
+    print(cprint("(3) Skill 系统(ai-agent-skills 集成)", "magenta", bold=True))
     skills = skill.list_skills()
     installed = [s['name'] for s in skills if s['installed']]
     print(f"   共有 {len(skills)} 个 skill,已装 {len(installed)} 个")
     for s in skills[:5]:
-        marker = "✓" if s['installed'] else "○"
+        marker = "[OK]" if s['installed'] else "[o]"
         print(f"     {marker} {s['name']:30} {s['desc']}")
     if len(skills) > 5:
         print(f"     ... 还有 {len(skills) - 5} 个")
     print()
 
     # 4. 持久化记忆
-    print(cprint("④ 持久化记忆", "magenta", bold=True))
+    print(cprint("(4) 持久化记忆", "magenta", bold=True))
     stats = memory.get_stats()
     print(f"   消息数: {stats['messages']}")
     print(f"   记忆项: {stats['memories']}")
@@ -363,7 +390,7 @@ def cmd_demo(args):
     print()
 
     # 5. 用量统计
-    print(cprint("⑤ 用量统计", "magenta", bold=True))
+    print(cprint("(5) 用量统计", "magenta", bold=True))
     usage = config.get_usage_stats()
     print(f"   总请求: {usage['total_requests']}")
     print(f"   总 token: {format_tokens(usage['total_input_tokens'] + usage['total_output_tokens'])}")
@@ -455,10 +482,10 @@ def cmd_snippet(args):
             tags=getattr(args, "tags", "") or "",
             language=getattr(args, "lang", "python"),
         )
-        print_success(f"✓ 已添加: [{s['id']}] {s['name']}")
+        print_success(f"[OK] 已添加: [{s['id']}] {s['name']}")
     elif args.snippet_action == "delete":
         if extras.delete_snippet(args.id):
-            print_success(f"✓ 已删除: {args.id}")
+            print_success(f"[OK] 已删除: {args.id}")
         else:
             print_warning(f"未找到: {args.id}")
     elif args.snippet_action == "search":
@@ -479,7 +506,7 @@ def cmd_history(args):
     """history 子命令 (v0.4.0)"""
     if getattr(args, "clear", False):
         extras.clear_history()
-        print_success("✓ 历史已清空")
+        print_success("[OK] 历史已清空")
         return 0
     items = extras.get_history(
         limit=getattr(args, "limit", 20) or 20,

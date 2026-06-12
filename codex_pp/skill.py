@@ -147,7 +147,7 @@ def install_skill(skill_name: str) -> bool:
         shutil.rmtree(dest)
     shutil.copytree(source, dest)
 
-    print(f"✓ 已安装: {skill_info['name']}")
+    print(f"[OK] 已安装: {skill_info['name']}")
     print(f"  路径: {dest}")
     print(f"  描述: {skill_info['desc']}")
 
@@ -182,5 +182,5 @@ def remove_skill(skill_name: str) -> bool:
         print(f"未安装: {skill_name}")
         return False
     shutil.rmtree(dest)
-    print(f"✓ 已删除: {skill_name}")
+    print(f"[OK] 已删除: {skill_name}")
     return True

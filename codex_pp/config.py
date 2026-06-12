@@ -20,10 +20,10 @@ DEFAULT_CONFIG = {
     "default_provider": "skillai",
     "providers": {
         "skillai": {
-            "name": "SkillAI (国内直连)",
+            "name": "SkillAI (国内直连, deepseek-v4)",
             "base_url": "https://api.skillai.top",  # 注意:不带 /v1
             "api_key": "",
-            "default_model": "gpt-4o-mini",
+            "default_model": "deepseek-v4-flash",  # 后端仅支持 deepseek-v4-pro / deepseek-v4-flash
             "enabled": True,
         },
         "openai": {

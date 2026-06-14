@@ -206,3 +206,12 @@ MIT
 - [ai-agent-skills](https://github.com/fast118/ai-agent-skills) - 11 个跨工具 skills
 - [free-ai-router](https://github.com/fast118/free-ai-router) - 另一个 AI 工具
 - [api.skillai.top](https://api.skillai.top) - 国内直连 API
+
+
+## 💬 联系
+
+扫码加微信群（AI 工具使用 / 提 issue / 需求讨论）：
+
+![微信群](assets/wechat-qr.png)
+
+或提 [GitHub Issue](https://github.com/fast118/codex-pp/issues)

@@ -11,21 +11,21 @@ import argparse
 # - 作为包运行: `py -m codex_pp.cli` (相对 import)
 # - 作为脚本运行: `codex++.exe` (PyInstaller onefile, 需要绝对 import)
 try:
-    from . import config, llm, skill, memory, extras, i18n
+    from . import config, llm, skill, memory, extras, i18n, cost
     from .ui import (
         cprint, print_banner, print_error, print_warning, print_success,
         print_info, print_table, format_tokens, format_latency,
         Spinner, print_assistant_header,
     )
 except ImportError:
-    from codex_pp import config, llm, skill, memory, extras, i18n
+    from codex_pp import config, llm, skill, memory, extras, i18n, cost
     from codex_pp.ui import (
         cprint, print_banner, print_error, print_warning, print_success,
         print_info, print_table, format_tokens, format_latency,
         Spinner, print_assistant_header,
     )
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 def tr(key, **kwargs):
@@ -344,6 +344,37 @@ def cmd_skill(args):
     return 0
 
 
+def cmd_cost(args):
+    """v0.5.0: token 成本估算"""
+    if args.list:
+        rows = cost.list_known_models()
+        print_info("已知 model 价格 (USD / 1M tokens):")
+        print(f"  {'MODEL':<25} {'IN':<10} {'OUT':<10}")
+        print(f"  {'-'*25} {'-'*10} {'-'*10}")
+        for r in rows:
+            print(f"  {r['model']:<25} ${r['in']:<9.3f} ${r['out']:<9.3f}")
+        return 0
+
+    if not args.model or args.prompt_tokens is None or args.completion_tokens is None:
+        print_error("用法: codex-pp cost <model> <prompt_tokens> <completion_tokens>")
+        print_info("  或: codex-pp cost --list")
+        return 1
+
+    r = cost.estimate(args.model, args.prompt_tokens, args.completion_tokens)
+    if r is None:
+        print_error(f"未知 model: {args.model}")
+        print_info("用 'codex-pp cost --list' 看已知列表")
+        return 1
+
+    total_tokens = r['prompt_tokens'] + r['completion_tokens']
+    print_success(f"Cost 估算 ({r['model']}):")
+    print(f"  Tokens: in={r['prompt_tokens']:,}  out={r['completion_tokens']:,}  total={total_tokens:,}")
+    print(f"  Price:  in=${r['input_price_per_m']}/M  out=${r['output_price_per_m']}/M")
+    print(f"  Cost:   in=${r['cost_input']:.6f}  out=${r['cost_output']:.6f}")
+    print(f"          TOTAL=${r['cost_total']:.6f}")
+    return 0
+
+
 def cmd_demo(args):
     """演示模式: 展示所有功能"""
     print_banner()
@@ -657,6 +688,14 @@ def main():
     c_mdel = memory_sub.add_parser("delete", help="删除记忆项")
     c_mdel.add_argument("key", help="记忆 key")
     p_memory.set_defaults(func=cmd_memory)
+
+    # v0.5.0: cost 估算
+    p_cost = subparsers.add_parser("cost", help="token 成本估算 (v0.5.0)")
+    p_cost.add_argument("model", nargs="?", help="模型名 (e.g. deepseek-chat)")
+    p_cost.add_argument("prompt_tokens", nargs="?", type=int, help="输入 token 数")
+    p_cost.add_argument("completion_tokens", nargs="?", type=int, help="输出 token 数")
+    p_cost.add_argument("--list", action="store_true", help="列出所有已知 model 价格")
+    p_cost.set_defaults(func=cmd_cost)
 
     args = parser.parse_args()
 

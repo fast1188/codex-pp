@@ -18,7 +18,7 @@ from typing import Optional
 
 SKILLS_DIR = Path.home() / ".codex-pp" / "skills"
 REPO_DIR = Path.home() / ".codex-pp" / "ai-agent-skills"
-REPO_URL = "https://github.com/fast118/ai-agent-skills.git"
+REPO_URL = "https://github.com/fast1188/ai-agent-skills.git"
 
 # 已知的 skills 列表(避免 clone 整个仓库)
 KNOWN_SKILLS = {

@@ -295,7 +295,7 @@ def cmd_version(args):
     print(f"codex-pp v{__version__}")
     print("国产化 AI 编程 CLI")
     print("License: MIT")
-    print("GitHub: https://github.com/fast118/codex-pp (待发布)")
+    print("GitHub: https://github.com/fast1188/codex-pp (待发布)")
 
 
 def cmd_skill(args):

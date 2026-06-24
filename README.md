@@ -7,7 +7,7 @@
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
-> 🌐 **控制台总览:** [fast118.github.io/console](https://fast118.github.io/console/) - 看所有 fast118 开源项目
+> 🌐 **控制台总览:** [fast1188.github.io/console](https://fast1188.github.io/console/) - 看所有 fast118 开源项目
 
 ---
 
@@ -146,7 +146,7 @@ codex-pp skill install token-saver
 # 装到 ~/.codex-pp/skills/
 ```
 
-完整 skill 库: [ai-agent-skills](https://github.com/fast118/ai-agent-skills)
+完整 skill 库: [ai-agent-skills](https://github.com/fast1188/ai-agent-skills)
 
 ## 持久化记忆
 
@@ -203,8 +203,8 @@ MIT
 
 ## 相关项目
 
-- [ai-agent-skills](https://github.com/fast118/ai-agent-skills) - 11 个跨工具 skills
-- [free-ai-router](https://github.com/fast118/free-ai-router) - 另一个 AI 工具
+- [ai-agent-skills](https://github.com/fast1188/ai-agent-skills) - 11 个跨工具 skills
+- [free-ai-router](https://github.com/fast1188/free-ai-router) - 另一个 AI 工具
 - [api.skillai.top](https://api.skillai.top) - 国内直连 API
 
 
@@ -214,4 +214,4 @@ MIT
 
 ![微信群](assets/wechat-qr.png)
 
-或提 [GitHub Issue](https://github.com/fast118/codex-pp/issues)
+或提 [GitHub Issue](https://github.com/fast1188/codex-pp/issues)
